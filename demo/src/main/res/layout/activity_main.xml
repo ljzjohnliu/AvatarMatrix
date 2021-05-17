@@ -5,7 +5,7 @@
     android:background="@color/Black">
 
     <FrameLayout
-        android:id="@+id/frame"
+        android:id="@+id/avatar_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

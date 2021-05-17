@@ -5,35 +5,27 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.study.avatar.R;
 
-/**
- * 头像的外轮廓
- */
-public class AvatarFrameOutsideLinearLayout extends LinearLayout {
+public class AvatarFrameOutsideLinearLayout extends RelativeLayout {
+    private Context context;
     private Paint paint;
     private int mImageHeight;
     private int mImageWidth;
-    private Context context;
-    private int orientation;
-    private int gravity;
-    private float alpha = 1;
+
+    private ImageView imageView;
 
     private boolean isSelect = false;
-
-//    Matrix matrix = new Matrix();
 
     public AvatarFrameOutsideLinearLayout(Context context) {
         super(context);
 
         this.context = context;
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.CENTER;
         this.setLayoutParams(params);
         setWillNotDraw(false);
 
@@ -48,7 +40,6 @@ public class AvatarFrameOutsideLinearLayout extends LinearLayout {
         super(context, attrs);
         this.context = context;
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.LEFT;
         this.setLayoutParams(params);
         setWillNotDraw(false);
 
@@ -59,9 +50,15 @@ public class AvatarFrameOutsideLinearLayout extends LinearLayout {
     }
 
     public void setImageUri() {
-        ImageView imageView = new ImageView(context);
+        if (imageView == null) {
+            imageView = new ImageView(context);
+            addView(imageView);
+        }
         imageView.setImageDrawable(context.getDrawable(R.drawable.test_avatar));
-        addView(imageView);
+    }
+
+    public ImageView getImageView() {
+        return imageView;
     }
 
     public int getmImageHeight() {
@@ -78,20 +75,6 @@ public class AvatarFrameOutsideLinearLayout extends LinearLayout {
 
     public void setmImageWidth(int mImageWidth) {
         this.mImageWidth = mImageWidth;
-    }
-
-    @Override
-    public int getOrientation() {
-        return orientation;
-    }
-
-    public void setMyGravity(int gravity) {
-        this.gravity = gravity;
-        setGravity(gravity);
-    }
-
-    public int getGravity() {
-        return gravity;
     }
 
     public boolean isSelect() {

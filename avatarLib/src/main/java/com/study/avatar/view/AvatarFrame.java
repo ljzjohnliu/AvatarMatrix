@@ -87,14 +87,11 @@ public class AvatarFrame extends FrameLayout {
         layout = new AvatarFrameOutsideLinearLayout(context);
         layout.setImageUri();
         Log.d("TAG", "addAvatarView: layout = " + layout);
-        Log.d("TAG", "addAvatarView: layout = " + layout);
         bitmap = BitmapUtils.convertViewToBitmap(layout);
 
         mImageWidth = bitmap.getWidth();
         mImageHeight = bitmap.getHeight();
-
-        LogUtils.i("mImageWidth===" + mImageWidth);
-        LogUtils.i("mImageHeight===" + mImageHeight);
+        Log.d("TAG", "addAvatarView: mImageWidth = " + mImageWidth + ", mImageHeight = " + mImageHeight);
 
         layout.setmImageWidth(mImageWidth);
         layout.setmImageHeight(mImageHeight);

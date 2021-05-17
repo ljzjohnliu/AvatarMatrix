@@ -21,16 +21,25 @@ import com.study.avatar.view.AvatarFrameState;
 import com.study.avatar.view.AvatarFrameOutsideLinearLayout;
 import com.study.avatar.view.AvatarFrame;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends Activity implements View.OnClickListener {
-    private FrameLayout frame;
-    private int width;
-    private int height;
+    public static final int NONE = 0; // 无
+    public static final int DRAG = 1; // 移动
+    public static final int ZOOM = 2; // 变换
+    public static final int DOUBLE_ZOOM = 3;
+    public static final int MIRROR = 4; //镜像
+
+    private FrameLayout avatarContainer;
+    private int screenWidth;
+    private int screenHeight;
+
+    private Context context;
+
+    private AvatarFrameHolder avatarFrameHolder;
+    private boolean isShowOptBtn = false;
 
     private AvatarFrameOutsideLinearLayout layout;
     private AvatarFrame avatarFrame;
+
     private int operateMode;
     private Bitmap operatingBitmap;
     private int operatedWidth;
@@ -39,47 +48,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int avatary1;
     private Matrix avatarMatrix = new Matrix();
     private Matrix avatarSavedMatrix = new Matrix();
-    private AvatarFrameHolder avatarFrameHolders;
-    private int avatarSelectImageCount = -1;
-    private Context context;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        context = this;
-        setContentView(R.layout.activity_main);
-        width = MyApplication.getInstance().getScreenWidth();
-        height = MyApplication.getInstance().getScreenHeight();
-        Log.d("TAG", "onCreate: width = " + width + ", height = " + height);
-        initView();
-        initData();
-    }
-
-    private void initData() {
-        addMyFrame();
-    }
-
-    private void initView() {
-        frame = (FrameLayout) findViewById(R.id.frame);
-        findViewById(R.id.addView).setOnClickListener(this);
-    }
-
-
-    /**
-     * 调整加字框的大小 以及删除和变换坐标
-     */
-    private void ajustAvatarFrame() {
-        if (avatarSelectImageCount != -1) {
-            avatarFrameHolders.getAvatarFrame().getLayout().layoutWidthAndHeight(avatarFrameHolders.getAvatarFrame().getLayout(), new AvatarFrameOutsideLinearLayout.OnLayoutWidth() {
-                @Override
-                public void layout(int width, int height) {
-                    avatarMatrix = avatarFrameHolders.getAvatarFrame().getMatrix();
-                    avatarSavedMatrix.set(avatarMatrix);
-                    adjustLocation(avatarMatrix, avatarFrameHolders.getAvatarFrame());
-                }
-            });
-        }
-    }
 
     @Override
     public void onClick(View v) {
@@ -88,6 +56,69 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 addMyFrame();
                 break;
         }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        context = this;
+        setContentView(R.layout.activity_main);
+        screenWidth = MyApplication.getInstance().getScreenWidth();
+        screenHeight = MyApplication.getInstance().getScreenHeight();
+        Log.d("TAG", "onCreate: screenWidth = " + screenWidth + ", screenHeight = " + screenHeight);
+        initView();
+        initData();
+    }
+
+    private void initView() {
+        avatarContainer = (FrameLayout) findViewById(R.id.avatar_container);
+        findViewById(R.id.addView).setOnClickListener(this);
+    }
+
+    private void initData() {
+        addMyFrame();
+    }
+
+    private void addMyFrame() {
+        avatarFrame = new AvatarFrame(this);
+        avatarFrame.setSelect(true);
+        avatarContainer.addView(avatarFrame);
+
+        layout = avatarFrame.getLayout();
+
+        operatingBitmap = BitmapUtils.convertViewToBitmap(layout);
+
+        operatedWidth = operatingBitmap.getWidth();
+        operatedHeight = operatingBitmap.getHeight();
+
+        //Set to the center of the screen and set the vertical and horizontal coordinates of four points
+        avatarx1 = screenWidth / 2 - operatedWidth / 2;
+        avatary1 = screenHeight / 3;
+        avatarFrame.leftTop.set(avatarx1, avatary1);
+        avatarFrame.rightTop.set(avatarx1 + operatedWidth, avatary1);
+        avatarFrame.leftBottom.set(avatarx1, avatary1 + operatedHeight);
+        avatarFrame.rightBottom.set(avatarx1 + operatedWidth, avatary1 + operatedHeight);
+
+
+        //here use matrix to scaling gesture
+        avatarMatrix = new Matrix();
+        avatarMatrix.postTranslate(avatarx1, avatary1);
+        avatarFrame.setMatrix(avatarMatrix);
+
+        //Here for each view with a rectangular package , click the rectangle on selected current view
+        AvatarFrameState avatarFrameState = new AvatarFrameState();
+        avatarFrameState.setLeft(avatarx1);
+        avatarFrameState.setTop(avatary1);
+        avatarFrameState.setRight(avatarx1 + operatedWidth);
+        avatarFrameState.setBottom(avatary1 + operatedHeight);
+
+        avatarFrameHolder = new AvatarFrameHolder();
+        avatarFrameHolder.setAvatarFrame(avatarFrame);
+        avatarFrameHolder.setState(avatarFrameState);
+
+        avatarFrame.setOnTouchListener(new AvatarMyOntouch());
+        isShowOptBtn = true;
+        Log.d("TAG", "addMyFrame: avatarSelectImageCount = " + isShowOptBtn);
     }
 
     /**
@@ -148,83 +179,57 @@ public class MainActivity extends Activity implements View.OnClickListener {
         minY = Math.min(y4, Math.min(y3, Math.min(y1, y2))) - 30;
         maxY = Math.max(y4, Math.max(y3, Math.max(y1, y2))) + 30;
 
-        avatarFrameHolders.getState().setLeft(minX);
-        avatarFrameHolders.getState().setTop(minY);
-        avatarFrameHolders.getState().setRight(maxX);
-        avatarFrameHolders.getState().setBottom(maxY);
+        avatarFrameHolder.getState().setLeft(minX);
+        avatarFrameHolder.getState().setTop(minY);
+        avatarFrameHolder.getState().setRight(maxX);
+        avatarFrameHolder.getState().setBottom(maxY);
+
+        Log.d("TAG", "adjustLocation: operateMode = " + operateMode);
 
         //将当前的view设置上矩阵对象
-        avatarFrameHolders.getAvatarFrame().setMatrix(matrix);
-    }
-
-    private void addMyFrame() {
-        avatarFrame = new AvatarFrame(this);
-        avatarFrame.setSelect(true);
-        //add to your frame
-        frame.addView(avatarFrame);
-
-        layout = avatarFrame.getLayout();
-
-        operatingBitmap = BitmapUtils.convertViewToBitmap(layout);
-
-        operatedWidth = operatingBitmap.getWidth();
-        operatedHeight = operatingBitmap.getHeight();
-
-        //Set to the center of the screen and set the vertical and horizontal coordinates of four points
-        avatarx1 = width / 2 - operatedWidth / 2;
-        avatary1 = height / 3;
-        avatarFrame.leftTop.set(avatarx1, avatary1);
-        avatarFrame.rightTop.set(avatarx1 + operatedWidth, avatary1);
-        avatarFrame.leftBottom.set(avatarx1, avatary1 + operatedHeight);
-        avatarFrame.rightBottom.set(avatarx1 + operatedWidth, avatary1 + operatedHeight);
-
-
-        //here use matrix to scaling gesture
-        avatarMatrix = new Matrix();
-        avatarMatrix.postTranslate(avatarx1, avatary1);
-        avatarFrame.setMatrix(avatarMatrix);
-
-        //Here for each view with a rectangular package , click the rectangle on selected current view
-        AvatarFrameState avatarFrameState = new AvatarFrameState();
-        avatarFrameState.setLeft(avatarx1);
-        avatarFrameState.setTop(avatary1);
-        avatarFrameState.setRight(avatarx1 + operatedWidth);
-        avatarFrameState.setBottom(avatary1 + operatedHeight);
-
-        avatarFrameHolders = new AvatarFrameHolder();
-        avatarFrameHolders.setAvatarFrame(avatarFrame);
-        avatarFrameHolders.setState(avatarFrameState);
-
-        avatarFrame.setOnTouchListener(new AddWordMyOntouch());
-        avatarSelectImageCount = 0;
+        switch (operateMode) {
+            case DRAG:
+            case ZOOM:
+            case DOUBLE_ZOOM:
+                avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
+                break;
+            case MIRROR:
+                avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
+//                avatarFrameHolder.getAvatarFrame().getLayout().getImageView().setMatrix(matrix);
+                break;
+            default:
+                break;
+        }
+        avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
     }
 
     private void selectMyFrame(float x, float y) {
-        if (avatarFrameHolders.getAvatarFrame().isSelect()) {
-            avatarFrameHolders.getAvatarFrame().setSelect(false);
+        if (avatarFrameHolder.getAvatarFrame().isSelect()) {
+            avatarFrameHolder.getAvatarFrame().setSelect(false);
         }
 
         //Create a rectangular area here getLeft getTop etc. mean the current view of the leftmost
         // uppermost and lowermost rightmost only to click inside the region is selected
-        Rect rect = new Rect((int) avatarFrameHolders.getState().getLeft(),
-                (int) avatarFrameHolders.getState().getTop(),
-                (int) avatarFrameHolders.getState().getRight(),
-                (int) avatarFrameHolders.getState().getBottom());
+        Rect rect = new Rect((int) avatarFrameHolder.getState().getLeft(),
+                (int) avatarFrameHolder.getState().getTop(),
+                (int) avatarFrameHolder.getState().getRight(),
+                (int) avatarFrameHolder.getState().getBottom());
 
         if (rect.contains((int) x, (int) y)) {
             //If you select the current view mentioned uppermost layer
-            avatarFrameHolders.getAvatarFrame().bringToFront();
-            avatarFrameHolders.getAvatarFrame().setSelect(true);
+            avatarFrameHolder.getAvatarFrame().bringToFront();
+            avatarFrameHolder.getAvatarFrame().setSelect(true);
             //Which record is selected
-            avatarSelectImageCount = 0;
+            isShowOptBtn = true;
             LogUtils.e("selected");
         } else {
-            avatarSelectImageCount = -1;
+            isShowOptBtn = false;
             LogUtils.e("no select");
         }
+        Log.d("TAG", "selectMyFrame: avatarSelectImageCount = " + isShowOptBtn);
     }
 
-    class AddWordMyOntouch implements View.OnTouchListener {
+    class AvatarMyOntouch implements View.OnTouchListener {
         private float baseValue = 0;
         //The original angle
         private float oldRotation;
@@ -234,12 +239,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         private float imgLengHalf;
         //保存刚开始按下的点
         private PointF startPoinF = new PointF();
-
-        private int NONE = 0; // 无
-        private int DRAG = 1; // 移动
-        private int ZOOM = 2; // 变换
-        private int DOUBLE_ZOOM = 3;
-        private int MIRROR = 4;
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -262,9 +261,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     selectMyFrame(event_x, event_y);
 
                     //如果有选中状态的额view
-                    if (avatarSelectImageCount != -1) {
-                        avatarFrame = avatarFrameHolders.getAvatarFrame();
-                        avatarMatrix = avatarFrameHolders.getAvatarFrame().getMatrix();
+                    Log.d("TAG", "ACTION_DOWN: avatarSelectImageCount = " + isShowOptBtn);
+                    if (isShowOptBtn) {
+                        avatarFrame = avatarFrameHolder.getAvatarFrame();
+                        avatarMatrix = avatarFrameHolder.getAvatarFrame().getMatrix();
                         avatarSavedMatrix.set(avatarMatrix);
                         operateMode = DRAG;
 
@@ -299,14 +299,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             operateMode = MIRROR;
 
                             if (operateMode != NONE) {
-                                if (avatarSelectImageCount != -1) {
+                                if (isShowOptBtn) {
                                     //最后在action_move 执行完前设置好矩阵 设置view的位置
-                                    avatarFrame = avatarFrameHolders.getAvatarFrame();
                                     avatarMatrix.set(avatarSavedMatrix);
                                     avatarMatrix.postScale(-1, 1, midP.x, midP.y);
 //                                    avatarMatrix.postScale(scale, scale, midP.x, midP.y);
 //                                    avatarMatrix.postRotate(newRotation, midP.x, midP.y);
-                                    adjustLocation(avatarMatrix, avatarFrame);
+                                    adjustLocation(avatarMatrix, avatarFrameHolder.getAvatarFrame());
                                 }
                             }
 
@@ -320,7 +319,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 case MotionEvent.ACTION_POINTER_DOWN:
                     operateMode = NONE;
-                    if (avatarSelectImageCount != -1) {
+                    if (isShowOptBtn) {
                         midP = midPoint(avatarFrame.leftTop, avatarFrame.rightBottom);
                         imgLengHalf = spacing(midP, avatarFrame.rightBottom);
                         oldRotation = rotationforTwo(event);
@@ -330,7 +329,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 case MotionEvent.ACTION_MOVE: // touch drag with the ball
                     //如果是双指点中
                     if (event.getPointerCount() == 2) {
-                        if (avatarSelectImageCount != -1) {
+                        if (isShowOptBtn) {
                             operateMode = DOUBLE_ZOOM;
                             float x = event.getX(0) - event.getX(1);
                             float y = event.getY(0) - event.getY(1);
@@ -352,7 +351,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         }
                     } else if (event.getPointerCount() == 1) {
                         //单指点击
-                        if (avatarSelectImageCount != -1) {
+                        if (isShowOptBtn) {
                             if (operateMode == DRAG) {
                                 if (event_x < MyApplication.getInstance().getScreenWidth() - 50 && event_x > 50
                                         && event_y > 100
@@ -383,10 +382,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
 
                     if (operateMode != NONE && operateMode != MIRROR) {
-                        if (avatarSelectImageCount != -1) {
+                        if (isShowOptBtn) {
                             //最后在action_move 执行完前设置好矩阵 设置view的位置
-                            avatarFrame = avatarFrameHolders.getAvatarFrame();
-                            adjustLocation(avatarMatrix, avatarFrame);
+                            adjustLocation(avatarMatrix, avatarFrameHolder.getAvatarFrame());
                         }
                     }
                     break;
@@ -405,10 +403,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void deleteMyFrame() {
-        if (avatarSelectImageCount != -1) {
-            frame.removeView(avatarFrameHolders.getAvatarFrame());
-            avatarFrameHolders = null;
-            avatarSelectImageCount = -1;
+        Log.d("TAG", "deleteMyFrame: avatarSelectImageCount = " + isShowOptBtn);
+        if (isShowOptBtn) {
+            avatarContainer.removeView(avatarFrameHolder.getAvatarFrame());
+            avatarFrameHolder = null;
+            isShowOptBtn = false;
         }
     }
 
