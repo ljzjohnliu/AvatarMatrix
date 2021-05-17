@@ -1,3 +1,6 @@
+# AvatarMatrix
+是用AddwordLib修改而来，替换了TextView为ImageView
+
 # AddwordLib([中文文档](https://github.com/jinguangyue/AddwordLib/blob/master/README_CN.md))
 TextView add text , vertical discharge switching (the direction of the font is no change!)
 
