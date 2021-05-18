@@ -3,10 +3,7 @@ package com.study.avatar.view;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Build;
 import android.util.AttributeSet;
-import android.view.ViewTreeObserver;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.study.avatar.R;
@@ -84,21 +81,5 @@ public class AvatarFrameOutsideLinearLayout extends RelativeLayout {
     public void setSelect(boolean isSelect) {
         this.isSelect = isSelect;
         invalidate();
-    }
-
-    public interface OnLayoutWidth {
-        void layout(int width, int height);
-    }
-
-    public void layoutWidthAndHeight(final AvatarFrameOutsideLinearLayout avatarFrameOutsideLinearLayout, final OnLayoutWidth onLayoutWidth) {
-        avatarFrameOutsideLinearLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    avatarFrameOutsideLinearLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                }
-                onLayoutWidth.layout(avatarFrameOutsideLinearLayout.getMeasuredWidth(), avatarFrameOutsideLinearLayout.getMeasuredHeight());
-            }
-        });
     }
 }

@@ -140,7 +140,7 @@ public class AvatarFrame extends FrameLayout {
         paint.setAntiAlias(true);
 
         paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(5f);
+        paint.setStrokeWidth(3f);
 
         if (bitMirror == null) {
             bitMirror = BitmapFactory.decodeResource(getResources(),
