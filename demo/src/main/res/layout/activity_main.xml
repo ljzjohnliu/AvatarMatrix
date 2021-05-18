@@ -7,7 +7,8 @@
     <FrameLayout
         android:id="@+id/avatar_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#00009900">
 
     </FrameLayout>
 

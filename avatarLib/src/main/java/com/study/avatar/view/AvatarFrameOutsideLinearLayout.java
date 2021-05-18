@@ -17,7 +17,7 @@ public class AvatarFrameOutsideLinearLayout extends RelativeLayout {
     private int mImageHeight;
     private int mImageWidth;
 
-    private ImageView imageView;
+    private CustomImageView imageView;
 
     private boolean isSelect = false;
 
@@ -51,13 +51,13 @@ public class AvatarFrameOutsideLinearLayout extends RelativeLayout {
 
     public void setImageUri() {
         if (imageView == null) {
-            imageView = new ImageView(context);
+            imageView = new CustomImageView(context);
             addView(imageView);
         }
         imageView.setImageDrawable(context.getDrawable(R.drawable.test_avatar));
     }
 
-    public ImageView getImageView() {
+    public CustomImageView getImageView() {
         return imageView;
     }
 

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 
 import com.study.avatar.util.BitmapUtils;
@@ -25,7 +26,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public static final int NONE = 0; // 无
     public static final int DRAG = 1; // 移动
     public static final int ZOOM = 2; // 变换
-    public static final int DOUBLE_ZOOM = 3;
+    public static final int DOUBLE_ZOOM = 3;//双指变换
     public static final int MIRROR = 4; //镜像
 
     private FrameLayout avatarContainer;
@@ -46,8 +47,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int operatedHeight;
     private int avatarx1;
     private int avatary1;
-    private Matrix avatarMatrix = new Matrix();
+    private Matrix avatarMatrix;
     private Matrix avatarSavedMatrix = new Matrix();
+
+    private Button addViewBtn;
 
     @Override
     public void onClick(View v) {
@@ -72,6 +75,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private void initView() {
         avatarContainer = (FrameLayout) findViewById(R.id.avatar_container);
+        addViewBtn = (Button) findViewById(R.id.addView);
         findViewById(R.id.addView).setOnClickListener(this);
     }
 
@@ -85,11 +89,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         avatarContainer.addView(avatarFrame);
 
         layout = avatarFrame.getLayout();
+        Log.d("TAG", "addMyFrame: layout getImageView = " + layout.getImageView());
 
-        operatingBitmap = BitmapUtils.convertViewToBitmap(layout);
+        operatingBitmap = BitmapUtils.convertViewToBitmap(layout/*.getImageView()*/);
 
         operatedWidth = operatingBitmap.getWidth();
         operatedHeight = operatingBitmap.getHeight();
+        Log.d("TAG", "addMyFrame: 22 operatedWidth = " + operatedWidth + ", operatedHeight = " + operatedHeight);
 
         //Set to the center of the screen and set the vertical and horizontal coordinates of four points
         avatarx1 = screenWidth / 2 - operatedWidth / 2;
@@ -104,6 +110,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         avatarMatrix = new Matrix();
         avatarMatrix.postTranslate(avatarx1, avatary1);
         avatarFrame.setMatrix(avatarMatrix);
+//        avatarFrame.getLayout().getImageView().setMatrix(avatarMatrix);
+//        avatarFrame.getLayout().getImageView().setImageMatrix(avatarMatrix);
 
         //Here for each view with a rectangular package , click the rectangle on selected current view
         AvatarFrameState avatarFrameState = new AvatarFrameState();
@@ -194,13 +202,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
                 break;
             case MIRROR:
-                avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
-//                avatarFrameHolder.getAvatarFrame().getLayout().getImageView().setMatrix(matrix);
+                avatarFrameHolder.getAvatarFrame().getLayout().getImageView().setMatrix(matrix);
                 break;
             default:
                 break;
         }
-        avatarFrameHolder.getAvatarFrame().setMatrix(matrix);
     }
 
     private void selectMyFrame(float x, float y) {
@@ -298,15 +304,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             oldRotation = rotation(midP, startPoinF);
                             operateMode = MIRROR;
 
-                            if (operateMode != NONE) {
-                                if (isShowOptBtn) {
-                                    //最后在action_move 执行完前设置好矩阵 设置view的位置
-                                    avatarMatrix.set(avatarSavedMatrix);
-                                    avatarMatrix.postScale(-1, 1, midP.x, midP.y);
+                            if (isShowOptBtn) {
+                                //最后在action_move 执行完前设置好矩阵 设置view的位置
+                                avatarMatrix.set(avatarSavedMatrix);
+                                avatarMatrix.postScale(-1, 1, midP.x, midP.y);
 //                                    avatarMatrix.postScale(scale, scale, midP.x, midP.y);
 //                                    avatarMatrix.postRotate(newRotation, midP.x, midP.y);
-                                    adjustLocation(avatarMatrix, avatarFrameHolder.getAvatarFrame());
-                                }
+                                adjustLocation(avatarMatrix, avatarFrameHolder.getAvatarFrame());
                             }
 
                         } else if (deleteRect.contains((int) event_x, (int) event_y)) {
